@@ -14,30 +14,27 @@ def main():
         {"role": "user", "content": query},
     ]
 
-    # Generate response
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model="gpt-4o-mini",
-        messages=conversation_history,
-        max_tokens=100
+        input=conversation_history,
+        max_output_tokens=100
     )
 
-    response_text = response.choices[0].message.content
+    response_text = response.output_text
 
-    # Summarize user preference from query and response
     summary_input = f"User Query: {query}\nAssistant Response: {response_text}"
 
-    summary = client.chat.completions.create(
+    summary = client.responses.create(
         model="gpt-4o-mini",
-        messages=[
+        input=[
             {"role": "system", "content": "Summarize user preferences based on the query and response below."},
             {"role": "user", "content": summary_input}
         ],
-        max_tokens=100
+        max_output_tokens=100
     )
 
-    summary_text = summary.choices[0].message.content
+    summary_text = summary.output_text
 
-    # Save summary
     with open("chat_history.txt", "a") as file:
         file.write(f"{summary_text}\n")
 
