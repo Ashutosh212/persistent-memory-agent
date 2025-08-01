@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import numpy as np
 import openai
 from typing import Tuple, Dict, List
@@ -13,7 +14,7 @@ class MemoryStore:
         self.model = model
         self.base_dir = base_dir
         os.makedirs(self.base_dir, exist_ok=True)
-        self.store: Dict[Tuple[str, str], List[Tuple[str, np.ndarray]]] = {}
+        self.store: Dict[Tuple[str, str], List[Tuple[List[str], List[np.ndarray]]]] = {}
 
     def embed(self, text: str) -> np.ndarray:
         response = openai.embeddings.create(
@@ -23,9 +24,11 @@ class MemoryStore:
         )
         return np.array(response.data[0].embedding)
 
-    def put(self, namespace: Tuple[str, str], key: str, data: Dict[str, str]):
+    def put(self, namespace: Tuple[str, str], key: str, data: Dict[str, List[str]]):
         user_id, memory = namespace
-        embedding = self.embed(data["text"])
+        embedding = []
+        for item in data['text']:
+            embedding.append(self.embed(item))
 
         if namespace not in self.store:
             self.store[namespace] = []
@@ -80,8 +83,8 @@ class MemoryStore:
         meta_path = f"{file_prefix}_meta.json"
         vecs_path = f"{file_prefix}_vecs.npy"
 
-        new_metadata = [{"data": text} for text, _ in self.store[namespace]]
-        new_embeddings = np.stack([vec for _, vec in self.store[namespace]])
+        new_metadata = [{"data": text} for text in self.store[namespace][0][0]]
+        new_embeddings = np.stack([vec for vec in self.store[namespace][0][1]])
 
         if os.path.exists(meta_path) and os.path.exists(vecs_path):
             with open(meta_path, "r") as f:
@@ -99,43 +102,96 @@ class MemoryStore:
 
         np.save(vecs_path, combined_embeddings)
 
-    def load(self):
-        for namespace in os.listdir(self.base_dir):
-            ns_dir = os.path.join(self.base_dir, namespace)
-            if not os.path.isdir(ns_dir):
-                continue
+    def delete(self, namespace: Tuple[str, str], key: str, entities: List[str]):
+        user_id, memory = namespace
+        file_prefix = self._key_to_path(f"{user_id}_{memory}", key)
+        meta_path = f"{file_prefix}_meta.json"
+        vecs_path = f"{file_prefix}_vecs.npy"
 
-            for file in os.listdir(ns_dir):
-                if file.endswith("_meta.json"):
-                    prefix = file.replace("_meta.json", "")
-                    meta_path = os.path.join(ns_dir, f"{prefix}_meta.json")
-                    vecs_path = os.path.join(ns_dir, f"{prefix}_vecs.npy")
+        # if os.path.exists(meta_path) and os.path.exists(vecs_path):
+        #     # Load existing metadata and embeddings
+        #     with open(meta_path, "r") as f:
+        #         existing_metadata = json.load(f)
+        #     existing_embeddings = np.load(vecs_path)
 
-                    with open(meta_path, "r") as f:
-                        metadata = json.load(f)
-                    embeddings = np.load(vecs_path)
+        #     assert len(existing_metadata) == len(existing_embeddings), "Metadata and embeddings length mismatch"
 
-                    key = (namespace, prefix)
-                    self.store[key] = [
-                        (entry["id"], entry["text"], emb)
-                        for entry, emb in zip(metadata, embeddings)
-                    ]
+        for entity in entities:
+            entity = re.search(r".*:(.*)", entity)
+            entity = entity.group(1).strip()
+        # for idx in reversed(range(len(existing_metadata))):
+            if os.path.exists(meta_path) and os.path.exists(vecs_path):
+                with open(meta_path, "r") as f:
+                    existing_metadata = json.load(f)
+                existing_embeddings = np.load(vecs_path)
+
+                assert len(existing_metadata) == len(existing_embeddings), "Metadata and embeddings length mismatch"
+
+                new_metadata = []
+                new_embeddings = []
+            
+                for idx, item in enumerate(existing_metadata):
+                    data_value = existing_metadata[idx]["data"]
+                # for entity in entities:
+                    match = re.search(r".*:(.*)", data_value)
+                    value_after_colon = match.group(1).strip()
+                    # print("---------")
+                    # print(entity.lower())
+                    # print(value_after_colon.lower())
+                    # print("---------")
+                    if not entity.lower() == value_after_colon.lower():
+                        new_metadata.append(item)
+                        new_embeddings.append(existing_embeddings[idx])
+
+                with open(meta_path, "w") as f:
+                    json.dump(new_metadata, f, indent=2)
+
+                np.save(vecs_path, np.stack(new_embeddings) if new_embeddings else np.empty((0, existing_embeddings.shape[1])))
+
+            else:
+                print(f"Metadata or embedding file not found at {meta_path} / {vecs_path}")
+
+
+    # def load(self):
+    #     for namespace in os.listdir(self.base_dir):
+    #         ns_dir = os.path.join(self.base_dir, namespace)
+    #         if not os.path.isdir(ns_dir):
+    #             continue
+
+    #         for file in os.listdir(ns_dir):
+    #             if file.endswith("_meta.json"):
+    #                 prefix = file.replace("_meta.json", "")
+    #                 meta_path = os.path.join(ns_dir, f"{prefix}_meta.json")
+    #                 vecs_path = os.path.join(ns_dir, f"{prefix}_vecs.npy")
+
+    #                 with open(meta_path, "r") as f:
+    #                     metadata = json.load(f)
+    #                 embeddings = np.load(vecs_path)
+
+    #                 key = (namespace, prefix)
+    #                 self.store[key] = [
+    #                     (entry["id"], entry["text"], emb)
+    #                     for entry, emb in zip(metadata, embeddings)
+    #                 ]
 
 
 def main():
     store = MemoryStore()
 
-    # store.put(("user", "1"), "semantic_memory", {"text": "I love pizzas"})
-    # store.put(("user", "1"), "semantic_memory", {"text": "I am a engineer"})
+    store.put(("user", "11"), "semantic_memory", {"text": ['Name: Ashutosh','Occupation: AI Engineer', 'Food Preference: pizzas']})
+    # store.put(("user", "11"), "semantic_memory", {"text": ["Occupation: engineer"]})
 
-    print(store.get(("user", "1"), "semantic_memory"))
+    # print(store.get(("user", "11"), "semantic_memory"))
     # results = store.search(("user", "1"), "semantic_memory", query="I'm hungry", limit=1)
     # print(results)
 
-    # checking the shape of embedding
-    # embeddings = np.load("memory_store_database/user_1/semantic_memory_vecs.npy")
+    # embeddings = np.load("memory_store_database/user_11/semantic_memory_vecs.npy")
     # print(embeddings.shape)
-    
+    # store.delete(("user", "11"), "semantic_memory", ['Occupation: AI Engineer'])
+
+    # embeddings = np.load("memory_store_database/user_11/semantic_memory_vecs.npy")
+    # print(embeddings.shape)
+
 
 if __name__ == "__main__":
     main()

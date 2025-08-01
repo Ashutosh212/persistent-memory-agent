@@ -18,5 +18,6 @@ dependencies = [
     "notebook>=7.4.4",
     "openai>=1.97.1",
     "scikit-learn>=1.7.1",
+    "streamlit>=1.47.1",
     "trustcall>=0.0.39",
 ]
