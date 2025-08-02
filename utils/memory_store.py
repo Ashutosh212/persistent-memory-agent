@@ -102,24 +102,24 @@ class MemoryStore:
 
         np.save(vecs_path, combined_embeddings)
 
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    def cosine_similarity_custom(self, vec1, vec2):
+        vec1 = np.array(vec1).reshape(1, -1)
+        vec2 = np.array(vec2).reshape(1, -1)
+        return cosine_similarity(vec1, vec2)[0][0]
+
     def delete(self, namespace: Tuple[str, str], key: str, entities: List[str]):
         user_id, memory = namespace
         file_prefix = self._key_to_path(f"{user_id}_{memory}", key)
         meta_path = f"{file_prefix}_meta.json"
         vecs_path = f"{file_prefix}_vecs.npy"
 
-        # if os.path.exists(meta_path) and os.path.exists(vecs_path):
-        #     # Load existing metadata and embeddings
-        #     with open(meta_path, "r") as f:
-        #         existing_metadata = json.load(f)
-        #     existing_embeddings = np.load(vecs_path)
-
-        #     assert len(existing_metadata) == len(existing_embeddings), "Metadata and embeddings length mismatch"
-
         for entity in entities:
-            entity = re.search(r".*:(.*)", entity)
-            entity = entity.group(1).strip()
-        # for idx in reversed(range(len(existing_metadata))):
+            original_entity = entity
+            regex_match = re.search(r".*:(.*)", entity)
+            entity = regex_match.group(1).strip() if regex_match else entity.strip()
+
             if os.path.exists(meta_path) and os.path.exists(vecs_path):
                 with open(meta_path, "r") as f:
                     existing_metadata = json.load(f)
@@ -129,51 +129,57 @@ class MemoryStore:
 
                 new_metadata = []
                 new_embeddings = []
-            
-                for idx, item in enumerate(existing_metadata):
-                    data_value = existing_metadata[idx]["data"]
-                # for entity in entities:
-                    match = re.search(r".*:(.*)", data_value)
-                    value_after_colon = match.group(1).strip()
-                    # print("---------")
-                    # print(entity.lower())
-                    # print(value_after_colon.lower())
-                    # print("---------")
-                    if not entity.lower() == value_after_colon.lower():
-                        new_metadata.append(item)
-                        new_embeddings.append(existing_embeddings[idx])
 
+                matched = False
+                entity_embedding = None
+                best_sim = -1
+                best_idx = -1
+
+                col = existing_embeddings.shape[1]
+
+                existing_embeddings = list(existing_embeddings)
+
+                for idx, item in enumerate(existing_metadata):
+                    data_value = item["data"]
+                    match = re.search(r".*:(.*)", data_value)
+                    value_after_colon = match.group(1).strip() if match else data_value.strip()
+
+                    # Case-insensitive exact match
+                    if entity.lower() == value_after_colon.lower():
+                        matched = True
+                        continue  # Skip this item (i.e., delete it)
+                    
+                    # Fallback: compute cosine similarity
+                    if not matched:
+                        if entity_embedding is None:
+                            entity_embedding = self.embed(original_entity)
+                        item_embedding = existing_embeddings[idx]
+                        sim = self.cosine_similarity_custom(entity_embedding, item_embedding)
+                        if sim > best_sim:
+                            best_sim = sim
+                            best_idx = idx
+
+                    new_metadata.append(item)
+                    new_embeddings.append(existing_embeddings[idx])
+
+                if not matched and best_sim > 0.6:
+                    print(f"Removing best cosine match for '{original_entity}' with sim={best_sim:.2f}")
+                    del existing_metadata[best_idx]
+                    del existing_embeddings[best_idx]
+                                    # Save updated files
+                    with open(meta_path, "w") as f:
+                        json.dump(existing_metadata, f, indent=2)
+
+                    np.save(vecs_path, np.stack(existing_embeddings) if existing_embeddings else np.empty((0, col)))
+                    continue
+
+                # Save updated files
                 with open(meta_path, "w") as f:
                     json.dump(new_metadata, f, indent=2)
 
                 np.save(vecs_path, np.stack(new_embeddings) if new_embeddings else np.empty((0, existing_embeddings.shape[1])))
-
             else:
                 print(f"Metadata or embedding file not found at {meta_path} / {vecs_path}")
-
-
-    # def load(self):
-    #     for namespace in os.listdir(self.base_dir):
-    #         ns_dir = os.path.join(self.base_dir, namespace)
-    #         if not os.path.isdir(ns_dir):
-    #             continue
-
-    #         for file in os.listdir(ns_dir):
-    #             if file.endswith("_meta.json"):
-    #                 prefix = file.replace("_meta.json", "")
-    #                 meta_path = os.path.join(ns_dir, f"{prefix}_meta.json")
-    #                 vecs_path = os.path.join(ns_dir, f"{prefix}_vecs.npy")
-
-    #                 with open(meta_path, "r") as f:
-    #                     metadata = json.load(f)
-    #                 embeddings = np.load(vecs_path)
-
-    #                 key = (namespace, prefix)
-    #                 self.store[key] = [
-    #                     (entry["id"], entry["text"], emb)
-    #                     for entry, emb in zip(metadata, embeddings)
-    #                 ]
-
 
 def main():
     store = MemoryStore()
