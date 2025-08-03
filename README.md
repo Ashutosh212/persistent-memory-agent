@@ -38,21 +38,21 @@ persistent-memory-system/
 ├── main_agents.py                 # agent workflow integration
 ├── config.py                      # Configs (USER_ID, type_memory)
 ├── utils/
-│   ├── memory_manager.py            # nodes/tools to retrieve, store, delete memory logic
+│   ├── memory_manager.py          # nodes/tools to retrieve, store, delete memory logic
 │   ├── memory_store.py            # Memory Functions developed from Scratch
 │   ├── prompts.py                 # Few-shot prompt templates
 │   └── helpers.py                 # Any shared helper functions
 ├── nodes/                         # Core logic for each node
 │   ├── personal_info_extractor.py        # Extract user info to be added
 │   ├── extract_delete_entity.py          # Extract entities to delete
-│   ├── classifier.py          # All the nodes/tools act as a classifier(e.g., Detect personal info, check dublicates info)
+│   ├── classifier.py                     # All the nodes/tools act as a classifier(e.g., Detect personal info, check dublicates info)
 │   └── call_model.py                     # Final model call after retreiving from saved memory
 ├── schema/
 │   ├── state.py                # agentic state that carrying the inforamtion
-├── Images                      # Agent Architecture Images
-├── demo                        # Demo working Videos
-├── notebooks
-├── Archieve                    # All the previous code and resourecs  
+├── Images                      # Agent Architecture Images                                                                                                                               
+├── demo                        # Demo working Videos                                                                                                                                     
+├── notebooks                                                                                                                                                                             
+├── Archieve                    # All the previous code and resources                                                                                                                     
 └── README.md
 
 ## Getting Started
