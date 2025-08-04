@@ -33,7 +33,7 @@ The result is a modular, intelligent memory system that makes LLM agents more co
 
 ### Final Agent Workflow
 
-![Alt text](Images/model_3_memory_with_deletion.png)
+![Alt text](Images/final_agent_with_annotation.png)
 
 ### File Structure
 
