@@ -1,3 +1,7 @@
+## Shram Technical Assignment
+
+Demo Video: [Link](https://drive.google.com/file/d/1nFZyavJbGKvYxTgCWX0c32GSFltPD8ay/view)
+
 ## Long-Term Memory for LLMs
 
 This project implements a long-term memory system for LLM-based agents, enabling them to remember and update user-specific facts over time. Unlike traditional stateless APIs, this system allows an LLM to retain structured information such as user goals, preferences, tools, and plans in a persistent format.
@@ -11,7 +15,7 @@ LLMs like OpenAI's models do not inherently remember prior user interactions acr
 
 ### Solution Components
 
-- **Structured Memory Storage**: Switched from flat text history to a JSON-based schema, storing memory as attribute-value pairs and also embedding for each preference for retreival tasks.
+- **Structured Memory Storage**: Switched from flat text history to a JSON-based schema, storing memory as attribute-value pairs and also embedding for each preference for retrieval tasks.
 - **Information Extraction**: Built a custom extractor with few-shot prompting to convert natural language into structured facts (e.g., "Productivity Tools: Magnet").
 - **Multi-Entity Handling**: Improved extraction logic to separate multiple values from a single input (e.g., handling "Magnet and Shram" as two entries).
 - **Semantic Similarity Matching**: Integrated OpenAI embeddings with cosine similarity to detect and prevent duplicate or semantically similar memory entries.
@@ -24,7 +28,7 @@ The result is a modular, intelligent memory system that makes LLM agents more co
 #### my first step 
 [Initial Agent Workflow](Images/model_1_memory_saver.png)
 
-#### Improved Logic for sematic memory saving
+#### Improved Logic for semantic memory saving
 [Upgraded Agent Workflow with info extraction logic](Images/model_2_memory_workflow.png)
 
 ### Final Agent Workflow
@@ -33,26 +37,26 @@ The result is a modular, intelligent memory system that makes LLM agents more co
 
 ### File Structure
 
-persistent-memory-system/
-├── app.py                         # Streamlit entry point(GUI)
-├── main_agents.py                 # agent workflow integration
-├── config.py                      # Configs (USER_ID, type_memory)
-├── utils/
-│   ├── memory_manager.py          # nodes/tools to retrieve, store, delete memory logic
-│   ├── memory_store.py            # Memory Functions developed from Scratch
-│   ├── prompts.py                 # Few-shot prompt templates
-│   └── helpers.py                 # Any shared helper functions
-├── nodes/                         # Core logic for each node
-│   ├── personal_info_extractor.py        # Extract user info to be added
-│   ├── extract_delete_entity.py          # Extract entities to delete
-│   ├── classifier.py                     # All the nodes/tools act as a classifier(e.g., Detect personal info, check dublicates info)
-│   └── call_model.py                     # Final model call after retreiving from saved memory
-├── schema/
-│   ├── state.py                # agentic state that carrying the inforamtion
-├── Images                      # Agent Architecture Images                                                                                                                               
-├── demo                        # Demo working Videos                                                                                                                                     
-├── notebooks                                                                                                                                                                             
-├── Archieve                    # All the previous code and resources                                                                                                                     
+persistent-memory-system/                                                                                                                                                                
+├── app.py                         # Streamlit entry point(GUI)                                                                                                                           
+├── main_agents.py                 # agent workflow integration                                                                                                                           
+├── config.py                      # Configs (USER_ID, type_memory)                                                                                                                       
+├── utils/                                                                                                                                                                                
+│   ├── memory_manager.py            # nodes/tools to retrieve, store, delete memory logic                                                                                                
+│   ├── memory_store.py            # Memory Functions developed from Scratch                                                                                                              
+│   ├── prompts.py                 # Few-shot prompt templates                                                                                                                            
+│   └── helpers.py                 # Any shared helper functions                                                                                                                          
+├── nodes/                         # Core logic for each node                                                                                                                            
+│   ├── personal_info_extractor.py        # Extract user info to be added                                                                                                                
+│   ├── extract_delete_entity.py          # Extract entities to delete                                                                                                                    
+│   ├── classifier.py          # All the nodes/tools act as a classifier(e.g., Detect personal info, check duplicates info)                                                              
+│   └── call_model.py                     # Final model call after retreiving from saved memory                                                                                           
+├── schema/                                                                                                                                                                              
+│   └── state.py                # agentic state that carrying the inforamtion                                                                                                            
+├── Images                      # Agent Architecture Images                                                                                                                              
+├── demo                        # Demo working Videos                                                                                                                                    
+├── notebooks                                                                                                                                                                            
+├── Archive                    # All the previous code and resources                                                                                                                      
 └── README.md
 
 ## Getting Started
@@ -92,6 +96,14 @@ uv pip install -r pyproject.toml
 
 > If `pyproject.toml` is already set up, this will install all necessary dependencies.
 
+Alternative: If you face issues with uv, you can install dependencies using pip and requirements.txt:
+```bash
+python -m venv venv           # Create virtual environment
+source venv/bin/activate      # Activate on Linux/macOS
+venv\Scripts\activate         # Activate on Windows
+
+pip install -r requirements.txt
+```
 ---
 
 #### 4. Set Your OpenAI API Key
@@ -109,4 +121,4 @@ OPENAI_API_KEY=sk-xxxxxxx...
 ```bash
 streamlit run app.py
 ```
-Alternatively, you can run the agent via a Jupyter notebook: notebooks/03_final_agent_with_deletion.ipynb
+#### Alternatively, you can run the agent via a Jupyter notebook: notebooks/03_final_agent_with_deletion.ipynb
