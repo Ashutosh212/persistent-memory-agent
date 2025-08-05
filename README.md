@@ -1,4 +1,3 @@
-## Shram Technical Assignment
 
 Demo Video: [Link](https://drive.google.com/file/d/1nFZyavJbGKvYxTgCWX0c32GSFltPD8ay/view)
 
